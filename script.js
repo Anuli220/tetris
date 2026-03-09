@@ -1,9 +1,9 @@
 const canvas = document.getElementById("tetris");
-let context = canvas.getContext("2d");
+const context = canvas.getContext("2d");
 
 context.scale(20, 20);
 
-const score = document.getElementById("score");
+let score = document.getElementById("score");
 
 function restartGame() {
     score = 0;
@@ -18,7 +18,7 @@ function createMatrix(w, h) {
     // });
 
     // Empty array to store rows
-    const matrix = []
+    const matrix = [];
     // Loop until height = 0 (create h number of rows)
     while (h--) {
         // Push a new row with 0s of w
@@ -28,14 +28,14 @@ function createMatrix(w, h) {
     return matrix;
 }
 
-function createPiece() {
-    if (type === "T") return [[0, 1, 0], [1, 1, 1], [0, 0, 0]];
-    if (type === "O") return [[2, 2], [2, 2]];
-    if (type === "L") return [[0, 3, 0], [0, 3, 0], [0, 3, 3]];
-    if (type === "J") return [[0, 4, 0], [0, 4, 0], [4, 4, 0]];
-    if (type === "I") return [[0, 5, 0, 0,], [0, 5, 0, 0,], [0, 5, 0, 0,], [0, 5, 0, 0,]];
-    if (type === "S") return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
-    if (type === "Z") return [[7, 7, 0], [0, 7, 7], [0, 0, 0]];
+function createPiece(type) {
+  if (type === "T") return [[0,1,0],[1,1,1],[0,0,0]];
+  if (type === "O") return [[2,2],[2,2]];
+  if (type === "L") return [[0,3,0],[0,3,0],[0,3,3]];
+  if (type === "J") return [[0,4,0],[0,4,0],[4,4,0]];
+  if (type === "I") return [[0,5,0,0],[0,5,0,0],[0,5,0,0],[0,5,0,0]];
+  if (type === "S") return [[0,6,6],[6,6,0],[0,0,0]];
+  if (type === "Z") return [[7,7,0],[0,7,7],[0,0,0]];
 }
 
 const colors = [
@@ -63,12 +63,12 @@ function collisionCheck(arena, player) {
     const [m, o] = [player.matrix, player.pos];
     // Loop through each row of the player matrix
     for (let y = 0; y < m.length; y++) {
-    // Loop through each column of the matrix row
+        // Loop through each column of the matrix row
         for (let x = 0; x < m[y].length; x++) {
             // check if block exists and collides with the arena
             if (m[y][x] !== 0 &&
                 (arena[y + o.y] &&
-                    arena[y + o.y][x + o.x]) !== 0) {
+                 arena[y + o.y][x + o.x]) !== 0) {
                 return true;
             }
         }
@@ -97,6 +97,11 @@ function arenaSweep() {
                 continue outer;
             }
         }
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        player.score += 10;
+        score.innerText = player.score;
+        y++;
     }
 }
 
@@ -107,7 +112,7 @@ function rotate(matrix) {
     for (let y = 0; y < matrix.length; y++) {
         for (let x = 0; x < y; x++) {
             [matrix[x][y], matrix[y][x]] =
-                [matrix[y][x], matrix[x][y]];
+            [matrix[y][x], matrix[x][y]];
         }
     }
     // reverse the rows by 90 degrees
@@ -125,7 +130,6 @@ function playerDrop() {
         merge(arena, player);
         // clear completed rows + update score
         arenaSweep();
-        score++;
         // reset player with a new piece
         playerReset();
     }
@@ -139,7 +143,7 @@ function playerMove(dir) {
     // collisionCheck after movement
     if (collisionCheck(arena, player)) {
         // revert the movement (up) if detected
-        player.pos.y--;
+        player.pos.x -= dir;
         // merge the piece with the arena
     }
 }
@@ -157,9 +161,9 @@ function playerRotate() {
 
 function playerReset() {
     // select a random tetris piece type
-    const pieces = "TOLKJISZ"
+    const pieces = "TJLOSZI"
     // and create a new piece matrix
-    player.matrix = createPiece(pieces[Math.floor(matchMedia.random() * pieces.length)]);
+    player.matrix = createPiece(pieces[Math.floor(Math.random() * pieces.length)]);
     // reset the vertical position to the top
     player.pos.y = 0;
     // center the piece horizontally in the arena
@@ -171,13 +175,13 @@ function playerReset() {
         // reset the player's score
         player.score = 0;
         // display the current score
-        scoreElement.innerText = player.score;
+        score.innerText = player.score;
     }
 }
 
 function drawMatrix(matrix, offset) {
     // loop through the matrix rows and colums to draw blocks
-    matrix.forEach((row, y => {
+    matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             // draw only non-zero values as coloured blocks
             if (value !== 0) {
@@ -186,16 +190,16 @@ function drawMatrix(matrix, offset) {
                 context.fillRect(x + offset.x, y + offset.y, 1, 1);
             }
         });
-    }));
+    });
 }
 
 function draw() {
     // fill the canvas background
     context.fillStyle = "rgb(28, 8, 36)";
     // clear the previous frame
-    context.fillRect(0, 0, canvas.Width, canvas.height);
+    context.fillRect(0, 0, canvas.width, canvas.height);
     // draw the arena (placed blocks)
-    drawMatrix(arena, {x: 0, y: 0});
+    drawMatrix(arena, { x: 0, y: 0 });
     drawMatrix(player.matrix, player.pos);
 }
 
@@ -211,7 +215,7 @@ function update(time = 0) {
     lastTime = time;
     dropCounter += delta;
     // Automatically drop piece based on drop interval
-    if(dropCounter > dropInterval) {
+    if (dropCounter > dropInterval) {
         playerDrop();
     }
     // Redraw the game each frame
@@ -222,10 +226,10 @@ function update(time = 0) {
 // Listen for keyboard input events
 document.addEventListener("keydown", event => {
     // Move in prompted direction when the corresponding arrow is pressed
-    if (event.key === "ArrowLeft")playerMove(-1);
-    else if (event.key === "ArrowRight")playerMove(1);
-    else if(event.key === "ArrowDown") playerDrop();
-    else if(event.key === "ArrowUp") playerRotate();
+    if (event.key === "ArrowLeft") playerMove(-1);
+    else if (event.key === "ArrowRight") playerMove(1);
+    else if (event.key === "ArrowDown") playerDrop();
+    else if (event.key === "ArrowUp") playerRotate();
 });
 
 // clear the arena grid
@@ -233,7 +237,7 @@ document.addEventListener("keydown", event => {
 function resetGame() {
     arena.forEach(row => row.fill(0));
     player.score = 0;
-    scoreElement.innerText = 0;
+    score.innerText = 0;
     playerReset();
 }
 
